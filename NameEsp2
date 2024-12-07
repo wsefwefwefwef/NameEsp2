@@ -1,0 +1,111 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Function to create ESP for a player
+local function createESP(player)
+    local character = player.Character
+    if character and not character:FindFirstChild("ESP") then
+        -- Create Highlight for the character
+        local highlight = Instance.new("Highlight", character)
+        highlight.Name = "ESP_Highlight"
+        highlight.FillColor = Color3.fromRGB(0, 0, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineColor = Color3.fromRGB(0, 0, 255)
+        highlight.OutlineTransparency = 0
+
+        -- Create BillboardGui for the ESP
+        local esp = Instance.new("BillboardGui", character)
+        esp.Name = "ESP"
+        esp.Size = UDim2.new(0, 100, 0, 40)  -- Adjusted size for horizontal layout
+        esp.StudsOffset = Vector3.new(0, 3, 0)
+        esp.AlwaysOnTop = true
+        esp.Adornee = character:FindFirstChild("Head")
+        esp.MaxDistance = 0  -- Fixed size
+
+        -- Name label
+        local nameLabel = Instance.new("TextLabel", esp)
+        nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        nameLabel.TextStrokeTransparency = 0
+        nameLabel.Text = player.Name
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextScaled = true
+        nameLabel.TextSize = 10
+
+        -- Health bar frame
+        local healthFrame = Instance.new("Frame", esp)
+        healthFrame.Size = UDim2.new(1, -20, 0.3, 0)  -- Smaller height
+        healthFrame.Position = UDim2.new(0.1, 0, 0.6, 0)
+        healthFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        healthFrame.BorderSizePixel = 2  -- Outline width
+        healthFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)  -- Outline color
+
+        -- Curved corners for health bar frame
+        local healthFrameCorner = Instance.new("UICorner")
+        healthFrameCorner.CornerRadius = UDim.new(0.5, 0)
+        healthFrameCorner.Parent = healthFrame
+        
+        -- Health bar
+        local healthBar = Instance.new("Frame", healthFrame)
+        healthBar.Size = UDim2.new(1, 0, 1, 0)
+        healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        healthBar.BorderSizePixel = 0
+
+        -- Curved corners for health bar
+        local healthBarCorner = Instance.new("UICorner")
+        healthBarCorner.CornerRadius = UDim.new(0.5, 0)
+        healthBarCorner.Parent = healthBar
+
+        -- Health bar label
+        local healthLabel = Instance.new("TextLabel", healthFrame)
+        healthLabel.Size = UDim2.new(1, 0, 1, 0)
+        healthLabel.BackgroundTransparency = 1
+        healthLabel.Text = "Health"
+        healthLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        healthLabel.TextStrokeTransparency = 0.5
+        healthLabel.Font = Enum.Font.GothamBold
+        healthLabel.TextScaled = true
+        healthLabel.TextSize = 10  -- Smaller text size
+        healthLabel.TextWrapped = true
+
+        -- Function to update health bar
+        local function updateHealth()
+            if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                healthBar.Size = UDim2.new(humanoid.Health / humanoid.MaxHealth, 0, 1, 0)
+                if humanoid.Health / humanoid.MaxHealth > 0.5 then
+                    healthBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+                elseif humanoid.Health / humanoid.MaxHealth > 0.25 then
+                    healthBar.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+                else
+                    healthBar.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+                end
+            end
+        end
+
+        -- Update health bar using Heartbeat instead of RenderStepped
+        RunService.Heartbeat:Connect(updateHealth)
+        
+        -- Handle character respawn
+        player.CharacterAdded:Connect(function(newCharacter)
+            createESP(player)
+        end)
+    end
+end
+
+-- Apply ESP to all players
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= Players.LocalPlayer then
+        createESP(player)
+    end
+end
+
+-- Apply ESP to new players
+Players.PlayerAdded:Connect(function(player)
+    if player ~= Players.LocalPlayer then
+        player.CharacterAdded:Connect(function(character)
+            createESP(player)
+        end)
+    end
+end)
